@@ -1,0 +1,18 @@
+Package: ink
+Type: Package
+Title: The Modern, High-Performant, Graphic Device for R
+Version: 0.0.1
+Authors@R: 
+    c(person(given = "Thomas Lin",
+             family = "Pedersen",
+             role = c("cre", "aut"),
+             email = "thomas.pedersen@rstudio.com",
+             comment = c(ORCID = "0000-0002-5147-4711")),
+      person(given = "RStudio",
+             role = "cph"))
+Maintainer: Thomas Lin Pedersen <thomas.pedersen@rstudio.com>
+Description: Provides state-of-the-art quality and performance graphic devices
+    based on the 'Blend2D' graphic framework.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
