@@ -7,7 +7,12 @@
 
 <!-- badges: end -->
 
-**UNDER CONSTRUCTION**
+**UNDER
+CONSTRUCTION**
+
+![](https://uploads4.wikiart.org/images/m-c-escher/drawing-hands.jpg!Large.jpg)
+
+Drawing Hands *by M. C. Escher*
 
 ## Code of Conduct
 
