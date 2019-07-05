@@ -1,4 +1,5 @@
 #' @keywords internal
+#' @importFrom systemfonts system_fonts
 "_PACKAGE"
 
 # The following block is used by usethis to automatically manage
