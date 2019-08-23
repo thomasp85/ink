@@ -21,15 +21,13 @@ class TextRenderer {
   BLGlyphBuffer last_char_buffer;
   BLTextMetrics last_char_metric;
 
-  double deg_to_rad = 0.0174533;
-
 public:
   TextRenderer() {
     last_font = std::make_pair("", -1);
   }
 
   BLResult load_font(const char *family, int face, double size) {
-    std::pair<std::string, int> fontfile = get_font_file("Arial", //Currently troubles with ttc files
+    std::pair<std::string, int> fontfile = get_font_file(family,
                                                          face == 2 || face == 4,
                                                          face == 3 || face == 4,
                                                          face == 5);
@@ -86,7 +84,7 @@ public:
     load_string(string);
     double width = last_string_metric.advance.x;
 
-    rot = -rot * deg_to_rad;
+    rot = -rot * DEG_TO_RAD;
     x -= (width * hadj) * cos(rot);
     y -= (width * hadj) * sin(rot);
 

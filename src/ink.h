@@ -12,6 +12,8 @@
 
 #include <blend2d.h>
 
+const double DEG_TO_RAD = 0.0174533;
+
 typedef std::tuple<std::string, int, int> font_key;
 
 struct key_hash : public std::unary_function<font_key, std::size_t>
