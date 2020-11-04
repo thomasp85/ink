@@ -1,7 +1,6 @@
-#include "ink.h"
+#pragma once
 
-#ifndef INIT_INCLUDED
-#define INIT_INCLUDED
+#include "ink.h"
 
 template<class T>
 void ink_metric_info(int c, const pGEcontext gc, double* ascent,
@@ -215,5 +214,3 @@ void makeInkDevice(T* device, const char *name) {
 
   } END_SUSPEND_INTERRUPTS;
 }
-
-#endif

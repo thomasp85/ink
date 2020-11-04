@@ -1,8 +1,7 @@
+#pragma once
+
 #include "ink.h"
 #include "TextRenderer.h"
-
-#ifndef INKDEV_INCLUDED
-#define INKDEV_INCLUDED
 
 /* Base class for graphic device interface to Blend2D.
  *
@@ -578,5 +577,3 @@ const char * InkDevice::blresult_string(BLResult code) {
   }
   return "Uknown error";
 }
-
-#endif

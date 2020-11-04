@@ -1,8 +1,7 @@
+#pragma once
+
 #include <string>
 #include "ink.h"
-
-#ifndef FONTS_INCLUDED
-#define FONTS_INCLUDED
 
 font_map* get_font_map();
 
@@ -39,5 +38,3 @@ static std::pair<std::string, int> get_font_file(const char* family, int bold,
 
   return res;
 }
-
-#endif

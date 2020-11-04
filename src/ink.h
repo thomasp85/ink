@@ -1,5 +1,4 @@
-#ifndef INK_INCLUDED
-#define INK_INCLUDED
+#pragma once
 
 #include <string>
 #include <tuple>
@@ -40,5 +39,3 @@ typedef std::unordered_map<font_key, std::pair< std::string, int >, key_hash, ke
 
 SEXP ink_bmp_c(SEXP file, SEXP width, SEXP height, SEXP pointsize, SEXP bg,
                SEXP res);
-
-#endif
