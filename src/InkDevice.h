@@ -168,6 +168,23 @@ private:
       mitre_cur = lmitre;
     }
   }
+  void convertRasterBuffer(unsigned int* dest, unsigned int* src, int size) {
+    uint16_t r, g, b, a;
+    for (int i = 0; i < size; i++){
+      a = R_ALPHA(src[i]);
+      if (a == 0) {
+        dest[i] = 0;
+        continue;
+      }
+      r = R_RED(src[i]) * a;
+      r = (r + 1 + ((r + 1) >> 8)) >> 8;
+      g = R_GREEN(src[i]) * a;
+      g = (g + 1 + ((g + 1) >> 8)) >> 8;
+      b = R_BLUE(src[i]) * a;
+      b = (b + 1 + ((b + 1) >> 8)) >> 8;
+      dest[i] = ((b)|((g)<<8)|((r)<<16)|((a)<<24));
+    }
+  }
   const char* blresult_string(BLResult code);
 };
 
@@ -267,6 +284,10 @@ double InkDevice::stringWidth(const char *str, const char *family, int face,
 }
 void InkDevice::charMetric(int c, const char *family, int face, double size,
                            double *ascent, double *descent, double *width) {
+  if (c < 0) {
+    c = -c;
+  }
+
   BLResult err = text_renderer.load_font(family, face, size * res_mod);
   if (err != BL_SUCCESS) {
     Rf_warning("ink failed to load font: '%s' (%s)", family, blresult_string(err));
@@ -440,7 +461,28 @@ void InkDevice::drawPath(int npoly, int* nper, double* x, double* y, int col,
 void InkDevice::drawRaster(unsigned int *raster, int w, int h, double x,
                            double y, double final_width, double final_height,
                            double rot, bool interpolate) {
-// TODO
+  unsigned int * buffer = new unsigned int[w * h];
+  convertRasterBuffer(buffer, raster, w * h);
+  BLImage raster_image;
+  BLResult err = raster_image.createFromData(w, h, BL_FORMAT_PRGB32, buffer, w * 4);
+  if (err != BL_SUCCESS) {
+    Rf_warning("Failed to mount raster with: %s", blresult_string(err));
+    return;
+  }
+  BLPattern raster_fill(raster_image, BL_EXTEND_MODE_PAD);
+  raster_fill.translate(x, y + final_height);
+  raster_fill.scale(final_width / (double) w, - final_height / (double) h);
+  context.rotate(-rot * DEG_TO_RAD, x, y);
+  context.setPatternQuality(interpolate ? BL_PATTERN_QUALITY_BILINEAR : BL_PATTERN_QUALITY_NEAREST);
+  context.setFillStyle(raster_fill);
+  context.fillRect(BLRect(x, y, final_width, final_height));
+
+  // Reset context
+  context.resetMatrix();
+  context.setFillStyle(convertColour(col_cur));
+
+  raster_image.reset();
+  delete[] buffer;
 }
 
 void InkDevice::drawText(double x, double y, const char *str,
