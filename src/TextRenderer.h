@@ -1,10 +1,9 @@
+#pragma once
+
 #include <vector>
 
 #include "ink.h"
 #include "fonts.h"
-
-#ifndef TEXTREN_INCLUDED
-#define TEXTREN_INCLUDED
 
 class TextRenderer {
   std::pair<std::string, int> last_font;
@@ -122,5 +121,3 @@ private:
     }
   }
 };
-
-#endif
