@@ -12,7 +12,7 @@ font_map& get_font_map(){
 }
 
 static const R_CallMethodDef CallEntries[] = {
-  {"ink_bmp_c", (DL_FUNC) &ink_bmp_c, 6},
+  {"ink_bmp_c", (DL_FUNC) &ink_bmp_c, 7},
   {NULL, NULL, 0}
 };
 

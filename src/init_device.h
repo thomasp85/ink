@@ -20,7 +20,7 @@ void ink_clip(double x0, double x1, double y0, double y1, pDevDesc dd) {
 template<class T>
 void ink_new_page(const pGEcontext gc, pDevDesc dd) {
   T * device = (T *) dd->deviceSpecific;
-  device->newPage();
+  device->newPage(gc->fill);
   return;
 }
 

@@ -27,15 +27,17 @@ public:
   std::string file;
   int background_int;
   double pointsize;
+  double res_real;
   double res_mod;
   double lwd_mod;
 
   TextRenderer text_renderer;
 
   // Lifecycle methods
-  InkDevice(const char* fp, int w, int h, double ps, int bg, double res);
+  InkDevice(const char* fp, int w, int h, double ps, int bg, double res,
+            double scaling);
   virtual ~InkDevice();
-  void newPage(bool increase_pageno = true);
+  void newPage(unsigned int bg, bool increase_pageno = true);
   void close();
   virtual bool savePage();
   SEXP capture();
@@ -195,7 +197,7 @@ private:
  * formatter and renderer.
  */
 InkDevice::InkDevice(const char* fp, int w, int h, double ps, int bg,
-                     double res) :
+                     double res, double scaling) :
   canvas(w, h, BL_FORMAT_PRGB32),
   context(canvas),
   width(w),
@@ -204,11 +206,12 @@ InkDevice::InkDevice(const char* fp, int w, int h, double ps, int bg,
   file(fp),
   background_int(bg),
   pointsize(ps),
-  res_mod(res / 72.0),
-  lwd_mod(res / 96.0),
+  res_real(res),
+  res_mod(scaling * res / 72.0),
+  lwd_mod(scaling * res / 96.0),
   text_renderer()
 {
-  newPage(false);
+  newPage(bg, false);
 }
 InkDevice::~InkDevice() {
   context.end();
@@ -217,7 +220,7 @@ InkDevice::~InkDevice() {
  * appropriate savePage() method. For scrren devices it may make sense to change
  * it for performance
  */
-void InkDevice::newPage(bool increase_pageno) {
+void InkDevice::newPage(unsigned int bg, bool increase_pageno) {
   if (pageno != 0) {
     if (!savePage()) {
       Rf_warning("ink could not write to the given file");
@@ -226,7 +229,11 @@ void InkDevice::newPage(bool increase_pageno) {
 
   clipRect(0, 0, width, height);
   context.setCompOp(BL_COMP_OP_SRC_COPY);
-  setFill(background_int);
+  if (visibleColour(bg)) {
+    setFill(bg);
+  } else {
+    setFill(background_int);
+  }
   context.fillAll();
   context.setCompOp(BL_COMP_OP_SRC_OVER);
 
@@ -489,7 +496,7 @@ void InkDevice::drawText(double x, double y, const char *str,
                          double hadj, int col) {
   BLResult err = text_renderer.load_font(family, face, size * res_mod);
   if (err != BL_SUCCESS) {
-    Rf_warning("ink failed to load font: '%s' (%s)", family, blresult_string(err));
+    Rf_warning("ink failed to load font: '%s' (%i: %s)", family, err, blresult_string(err));
     return;
   }
   setFill(col);
@@ -498,13 +505,12 @@ void InkDevice::drawText(double x, double y, const char *str,
 
 const char * InkDevice::blresult_string(BLResult code) {
   switch (code) {
-  case BL_SUCCESS: return "Successful result code.";
   case BL_ERROR_OUT_OF_MEMORY: return "Out of memory [ENOMEM].";
   case BL_ERROR_INVALID_VALUE: return "Invalid value/argument [EINVAL].";
   case BL_ERROR_INVALID_STATE: return "Invalid state [EFAULT].";
   case BL_ERROR_INVALID_HANDLE: return "Invalid handle or file. [EBADF].";
   case BL_ERROR_VALUE_TOO_LARGE: return "Value too large [EOVERFLOW].";
-  case BL_ERROR_NOT_INITIALIZED: return "Not initialized (some instance is built-in none when it shouldn't be).";
+  case BL_ERROR_NOT_INITIALIZED: return "Object not initialized.";
   case BL_ERROR_NOT_IMPLEMENTED: return "Not implemented [ENOSYS].";
   case BL_ERROR_NOT_PERMITTED: return "Operation not permitted [EPERM].";
   case BL_ERROR_IO: return "IO error [EIO].";
@@ -537,6 +543,7 @@ const char * InkDevice::blresult_string(BLResult code) {
   case BL_ERROR_TOO_MANY_OPEN_FILES_BY_OS: return "Too many open files by OS [ENFILE].";
   case BL_ERROR_TOO_MANY_LINKS: return "Too many symbolic links on FS [EMLINK].";
   case BL_ERROR_TOO_MANY_THREADS: return "Too many threads [EAGAIN].";
+  case BL_ERROR_THREAD_POOL_EXHAUSTED: return "Thread pool is exhausted and couldn't acquire the requested thread count.";
   case BL_ERROR_FILE_EMPTY: return "File is empty (not specific to any OS error).";
   case BL_ERROR_OPEN_FAILED: return "File open failed [Windows::ERROR_OPEN_FAILED].";
   case BL_ERROR_NOT_ROOT_DEVICE: return "Not a root device/directory [Windows::ERROR_DIR_NOT_ROOT].";
@@ -568,6 +575,8 @@ const char * InkDevice::blresult_string(BLResult code) {
   case BL_ERROR_JPEG_INVALID_SOF: return "Invalid SOF marker (JPEG).";
   case BL_ERROR_JPEG_MULTIPLE_SOF: return "Multiple SOF markers (JPEG).";
   case BL_ERROR_JPEG_UNSUPPORTED_SOF: return "Unsupported SOF marker (JPEG).";
+  case BL_ERROR_FONT_NOT_INITIALIZED: return "Font doesn't have any data as it's not initialized.";
+  case BL_ERROR_FONT_NO_MATCH: return "Font or font-face was not matched (BLFontManager).";
   case BL_ERROR_FONT_NO_CHARACTER_MAPPING: return "Font has no character to glyph mapping data.";
   case BL_ERROR_FONT_MISSING_IMPORTANT_TABLE: return "Font has missing an important table.";
   case BL_ERROR_FONT_FEATURE_NOT_AVAILABLE: return "Font feature is not available.";

@@ -4,8 +4,15 @@
 \alias{ink_bmp}
 \title{Draw to a bmp file}
 \usage{
-ink_bmp(filename = "Rplot\%03d.bmp", width = 480, height = 480,
-  units = "px", pointsize = 12, background = "white", res = 72)
+ink_bmp(
+  filename = "Rplot\%03d.bmp",
+  width = 480,
+  height = 480,
+  units = "px",
+  pointsize = 12,
+  background = "white",
+  res = 72
+)
 }
 \arguments{
 \item{filename}{The name of the file. Follows the same semantics as the file

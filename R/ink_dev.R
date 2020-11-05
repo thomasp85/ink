@@ -16,6 +16,9 @@
 #' @param res The resolution of the device. This setting will govern how device
 #'   dimensions given in inches, centimeters, or millimeters will be converted
 #'   to pixels. Further, it will be used to scale text sizes and linewidths
+#' @param scaling A scaling factor to apply to the rendered line width and text
+#'   size. Useful for getting the right dimensions at the resolution that you
+#'   need.
 #'
 #' @export
 #'
@@ -27,13 +30,13 @@
 #'
 ink_bmp <- function(filename = 'Rplot%03d.bmp', width = 480, height = 480,
                     units = 'px', pointsize = 12, background = 'white',
-                    res = 72) {
+                    res = 72, scaling = 1) {
   if (deparse(sys.call()) == 'dev(filename = filename, width = dim[1], height = dim[2], ...)') {
     units <- 'in'
   }
   file <- validate_path(filename)
   dim <- get_dims(width, height, units, res)
   .Call("ink_bmp_c", file, dim[1], dim[2], as.numeric(pointsize), background,
-        as.numeric(res), PACKAGE = 'ink')
-  invisible()
+        as.numeric(res), as.numeric(scaling), PACKAGE = 'ink')
+  invisible(NULL)
 }

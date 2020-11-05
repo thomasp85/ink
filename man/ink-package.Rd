@@ -18,7 +18,7 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Thomas Lin Pedersen \email{thomas.pedersen@rstudio.com} (0000-0002-5147-4711)
+\strong{Maintainer}: Thomas Lin Pedersen \email{thomas.pedersen@rstudio.com} (\href{https://orcid.org/0000-0002-5147-4711}{ORCID})
 
 Other contributors:
 \itemize{

@@ -1,62 +1,60 @@
 #pragma once
 
-#include <vector>
-
 #include "ink.h"
-#include "fonts.h"
+
+#include <vector>
+#include <systemfonts.h>
+#include <textshaping.h>
 
 class TextRenderer {
-  std::pair<std::string, int> last_font;
-  BLFontLoader fontloader;
+  FontSettings last_font;
+  std::vector<textshaping::Point> loc_buffer;
+  std::vector<uint32_t> id_buffer;
+  std::vector<int> cluster_buffer;
+  std::vector<unsigned int> font_buffer;
+  std::vector<FontSettings> fallback_buffer;
+
+  BLFontData fontdata;
   BLFontFace fontface;
   BLFont font;
   BLFontMetrics fontmetrics;
-
-  std::string last_string = "";
-  BLGlyphBuffer last_string_buffer;
-  BLTextMetrics last_string_metric;
 
   int last_char = -1;
   BLGlyphBuffer last_char_buffer;
   BLTextMetrics last_char_metric;
 
 public:
-  TextRenderer() {
-    last_font = std::make_pair("", -1);
-  }
+  TextRenderer() {}
 
   BLResult load_font(const char *family, int face, double size) {
-    std::pair<std::string, int> fontfile = get_font_file(family,
-                                                         face == 2 || face == 4,
-                                                         face == 3 || face == 4,
-                                                         face == 5);
+    FontSettings fontfile = get_font_file(family,
+                                      face == 2 || face == 4,
+                                      face == 3 || face == 4,
+                                      face == 5);
 
-    BLResult err;
+    BLResult err = BL_SUCCESS;
 
     bool refresh = false;
 
-    if (fontfile.first != last_font.first) {
+    if (fontfile.index != last_font.index ||
+        strncmp(fontfile.file, last_font.file, PATH_MAX) != 0) {
       refresh = true;
-      err = fontloader.createFromFile(fontfile.first.c_str(),
-                                      BL_FILE_READ_MMAP_ENABLED);
+      err = fontdata.createFromFile(fontfile.file, BL_FILE_READ_MMAP_ENABLED);
       if (err != BL_SUCCESS) return err;
     }
-    if (refresh || fontfile.second != last_font.second) {
+    if (refresh || fontfile.index != last_font.index) {
       refresh = true;
-      err = fontface.createFromLoader(fontloader, fontfile.second);
+      err = fontface.createFromData(fontdata, fontfile.index);
       if (err != BL_SUCCESS) return err;
     }
     last_font = fontfile;
     if (refresh || font.size() != (float) size) {
       refresh = true;
       err = font.createFromFace(fontface, size);
+      if (err != BL_SUCCESS) return err;
       fontmetrics = font.metrics();
     }
     if (refresh) {
-      last_string = "";
-      last_string_buffer.clear();
-      last_string_metric.reset();
-
       last_char = -1;
       last_char_buffer.clear();
       last_char_metric.reset();
@@ -66,8 +64,19 @@ public:
   }
 
   double get_text_width(const char* string) {
-    load_string(string);
-    return last_string_metric.advance.x;
+    double width = 0.0;
+    int error = textshaping::string_width(
+      string,
+      last_font,
+      font.size(),
+      72.0,
+      1,
+      &width
+    );
+    if (error) {
+      return 0.0;
+    }
+    return width;
   }
 
   void get_char_metric(int c, double *ascent, double *descent, double *width) {
@@ -80,8 +89,50 @@ public:
 
   void plot_text(double x, double y, const char *string, double rot, double hadj,
                  BLContext &context) {
-    load_string(string);
-    double width = last_string_metric.advance.x;
+    double width = get_text_width(string);
+
+    if (width == 0.0) {
+      return;
+    }
+
+    int expected_max = strlen(string) * 16;
+    loc_buffer.reserve(expected_max);
+    id_buffer.reserve(expected_max);
+    cluster_buffer.reserve(expected_max);
+    font_buffer.reserve(expected_max);
+    fallback_buffer.reserve(expected_max);
+
+    int err = textshaping::string_shape(
+      string,
+      last_font,
+      font.size(),
+      72.0,
+      loc_buffer,
+      id_buffer,
+      cluster_buffer,
+      font_buffer,
+      fallback_buffer
+    );
+
+    if (err != 0) {
+      Rf_warning("textshaping failed to shape the string");
+      return;
+    }
+
+    int n_glyphs = loc_buffer.size();
+
+    if (n_glyphs == 0) {
+      return;
+    }
+
+    BLGlyphRun gr = {};
+    gr.glyphData = id_buffer.data();
+    gr.placementData = loc_buffer.data();
+    gr.size = n_glyphs;
+    gr.glyphSize = sizeof(uint32_t);
+    gr.glyphAdvance = sizeof(uint32_t);
+    gr.placementType = BL_GLYPH_PLACEMENT_TYPE_USER_UNITS;
+    gr.placementAdvance = sizeof(textshaping::Point);
 
     rot = -rot * DEG_TO_RAD;
     x -= (width * hadj) * cos(rot);
@@ -91,8 +142,7 @@ public:
       context.rotate(rot, x, y);
     }
 
-
-    context.fillGlyphRun(BLPoint(x, y), font, last_string_buffer.glyphRun());
+    context.fillGlyphRun(BLPoint(x, y), font, gr);
 
     if (rot != 0) {
       context.resetMatrix();
@@ -100,16 +150,6 @@ public:
   }
 
 private:
-  void load_string(const char * text) {
-    if (strcmp(text, last_string.c_str()) != 0) {
-      last_string_buffer.setUtf8Text(text);
-      font.shape(last_string_buffer);
-      font.applyKerning(last_string_buffer);
-      font.getTextMetrics(last_string_buffer, last_string_metric);
-
-      last_string = text;
-    }
-  }
   void load_char(int code) {
     if (code != last_char) {
       std::wstring c(static_cast<wchar_t>(code), 1);
@@ -119,5 +159,17 @@ private:
 
       last_char = code;
     }
+  }
+  FontSettings get_font_file(const char* family, int bold, int italic,
+                             int symbol) {
+    const char* fontfamily = family;
+    if (symbol) {
+#if defined _WIN32
+      fontfamily = "Segoe UI Symbol";
+#else
+      fontfamily = "Symbol";
+#endif
+    }
+    return locate_font_with_features(fontfamily, italic, bold);
   }
 };

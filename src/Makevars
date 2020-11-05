@@ -1,3 +1,4 @@
 CXX_STD = CXX11
 
+PKG_CXXFLAGS = -I/usr/local/include/
 PKG_LIBS = -lblend2d -Wl,-rpath,/usr/local/lib

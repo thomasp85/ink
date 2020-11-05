@@ -2,4 +2,5 @@
 
 export(ink_bmp)
 importFrom(systemfonts,system_fonts)
+importFrom(textshaping,text_width)
 useDynLib(ink, .registration = TRUE)

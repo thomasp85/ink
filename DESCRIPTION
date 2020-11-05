@@ -19,10 +19,14 @@ LazyData: true
 URL: https://github.com/thomasp85/ink
 BugReports: https://github.com/thomasp85/ink/issues
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 6.1.1
+RoxygenNote: 7.1.1
 Imports: 
-    systemfonts
+    systemfonts,
+    textshaping
 Suggests: 
     knitr,
     rmarkdown
+LinkingTo:
+    systemfonts,
+    textshaping
 VignetteBuilder: knitr

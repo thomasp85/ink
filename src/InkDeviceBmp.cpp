@@ -4,8 +4,9 @@
 
 class InkDeviceBmp : public InkDevice {
 public:
-  InkDeviceBmp(const char* fp, int w, int h, double ps, int bg, double res) :
-  InkDevice(fp, w, h, ps, bg, res)
+  InkDeviceBmp(const char* fp, int w, int h, double ps, int bg, double res,
+               double scaling) :
+  InkDevice(fp, w, h, ps, bg, res, scaling)
   {
 
   }
@@ -22,7 +23,7 @@ public:
 
 // [[export]]
 SEXP ink_bmp_c(SEXP file, SEXP width, SEXP height, SEXP pointsize, SEXP bg,
-               SEXP res) {
+               SEXP res, SEXP scaling) {
   int bgCol = RGBpar(bg, 0);
   InkDeviceBmp* device = new InkDeviceBmp(
     CHAR(STRING_ELT(file, 0)),
@@ -30,7 +31,8 @@ SEXP ink_bmp_c(SEXP file, SEXP width, SEXP height, SEXP pointsize, SEXP bg,
     INTEGER(height)[0],
     REAL(pointsize)[0],
     bgCol,
-    REAL(res)[0]
+    REAL(res)[0],
+    REAL(scaling)[0]
   );
   makeInkDevice<InkDeviceBmp>(device, "ink_bmp");
 
